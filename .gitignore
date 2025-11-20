@@ -32,13 +32,6 @@ dist/
 *.tmp
 *.swp
 
-# ---- Data Files (optional but recommended if large) ----
-*.csv
-*.xlsx
-*.xls
-*.txt
-*.json
-
 # ---- Model Files ----
 *.h5
 *.pkl
