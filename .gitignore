@@ -1,0 +1,58 @@
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+env/
+venv/
+.venv/
+ENV/
+build/
+dist/
+
+# ---- Virtual Environment ----
+.env/
+*.env
+
+# ---- Jupyter Notebooks ----
+.ipynb_checkpoints/
+
+# ---- VS Code ----
+.vscode/
+.history/
+
+# ---- macOS System Files ----
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ---- Logs & Temp ----
+*.log
+*.tmp
+*.swp
+
+# ---- Data Files (optional but recommended if large) ----
+*.csv
+*.xlsx
+*.xls
+*.txt
+*.json
+
+# ---- Model Files ----
+*.h5
+*.pkl
+*.pickle
+*.joblib
+
+# ---- Plots and output images ----
+*.png
+*.jpg
+*.jpeg
+*.svg
+
+# ---- Archive/Backup Files ----
+*.zip
+*.tar
+*.gz
+*.rar
