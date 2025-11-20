@@ -30,11 +30,11 @@ The script will:
 
 **Dataset**
 
-**The data I used in this project was pulled from** [**https://www.ncei.noaa.gov/access/past-weather/40.987647187338084,-73.94764870907557,40.55523303389395,-72.97697877927584**](https://www.ncei.noaa.gov/access/past-weather/40.987647187338084,-73.94764870907557,40.55523303389395,-72.97697877927584)
+The data I used in this project was pulled from [**https://www.ncei.noaa.gov/access/past-weather/40.987647187338084,-73.94764870907557,40.55523303389395,-72.97697877927584**](https://www.ncei.noaa.gov/access/past-weather/40.987647187338084,-73.94764870907557,40.55523303389395,-72.97697877927584)
 
-**I trimmed the dataset to only include maximum and minimum temperatures along with the date of the collected data.**
+I trimmed the dataset to only include maximum and minimum temperatures along with the date of the collected data.
 
-**This dataset is extremely reliable as it is from a government domain.**
+This dataset is extremely reliable as it is from a government domain.
 
 **Sample output**
 
