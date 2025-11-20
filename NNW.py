@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# === Activation Functions (Vectorized) ===
+# _Activation Functions_
 def sigmoid(x): return 1 / (1 + np.exp(-x))
 def sigmoid_derivative(x): return x * (1 - x)
 
@@ -22,7 +22,7 @@ def softplus(x): return np.log1p(np.exp(x))
 def softplus_derivative(x): return 1 / (1 + np.exp(-x))
 
 
-# === Neural Network Class ===
+# _Neural Network Class_
 class ClimateNN:
     def __init__(self, input_size, hidden_size, output_size, activation='sigmoid'):
         self.w1 = np.random.randn(input_size, hidden_size) * 0.01
@@ -64,11 +64,11 @@ class ClimateNN:
         self.w1 -= learning_rate * dw1
         self.b1 -= learning_rate * db1
 
-    def train(self, X, y, learning_rate=0.01, epochs=1000, verbose=False):
+    def train(self, X, y, learning_rate=0.01, epochs=2000, verbose=False):
         for epoch in range(epochs):
             output = self.forward(X)
             self.backward(X, y, output, learning_rate)
-            if verbose and epoch % 200 == 0:
+            if verbose and epoch % 500 == 0:
                 loss = np.mean((y - output) ** 2)
                 print(f"Epoch {epoch} | Loss: {loss:.4f}")
 
@@ -76,9 +76,12 @@ class ClimateNN:
         return self.forward(X)
 
 
-# === Helper Functions ===
+# _Helper Functions_
 def normalize_data(X):
-    return (X - np.mean(X, axis=0)) / np.std(X, axis=0), np.mean(X, axis=0), np.std(X, axis=0)
+    mean = np.mean(X, axis=0)
+    std = np.std(X, axis=0)
+    X_norm = (X - mean) / (std + 1e-8)  # avoid division by zero
+    return X_norm, mean, std
 
 def denormalize_data(X, mean, std):
     return X * std + mean
@@ -86,61 +89,58 @@ def denormalize_data(X, mean, std):
 def mse(y_true, y_pred):
     return np.mean((y_true - y_pred)**2)
 
-
-# === Full Training Wrapper ===
-def train_and_predict(df, activation, hidden_size=5, learning_rate=0.01, epochs=800):
-    features = ["TMAX", "TMIN", "PRCP"]
-    
-    X_raw = df[features].values[:-1]
-    y_raw = df[['TMAX', 'TMIN']].values[1:]
-
-    X, mean_X, std_X = normalize_data(X_raw)
-    y, mean_y, std_y = normalize_data(y_raw)
-
-    nn = ClimateNN(input_size=len(features), hidden_size=hidden_size, 
-                   output_size=2, activation=activation)
-
-    nn.train(X, y, learning_rate, epochs, verbose=False)
-
-    last_day = normalize_data(df[features].values[-1:])[0]
-    prediction = nn.predict(last_day)
-    prediction = denormalize_data(prediction, mean_y, std_y)
-
-    return prediction
+def create_lag_features(df, lag=7):
+    features = []
+    targets = []
+    for i in range(lag, len(df)):
+        past = df[['TMAX','TMIN']].iloc[i-lag:i].values.flatten()
+        target = df[['TMAX','TMIN']].iloc[i].values
+        features.append(past)
+        targets.append(target)
+    return np.array(features), np.array(targets)
 
 
-# === MAIN PROGRAM ===
+# _Full Training Wrapper_
+def train_and_predict(df, activation, hidden_size=10, learning_rate=0.01, epochs=2000, lag=7):
+    X, y = create_lag_features(df, lag)
+    X, mean_X, std_X = normalize_data(X)
+    y, mean_y, std_y = normalize_data(y)
+
+    nn = ClimateNN(input_size=X.shape[1], hidden_size=hidden_size, output_size=2, activation=activation)
+    nn.train(X, y, learning_rate, epochs)
+
+    last_input = df[['TMAX','TMIN']].iloc[-lag:].values.flatten().reshape(1, -1)
+    last_input_norm = (last_input - mean_X) / std_X
+    prediction_norm = nn.predict(last_input_norm)
+    prediction = denormalize_data(prediction_norm, mean_y, std_y)
+    return prediction.flatten()
+
+
+# _MAIN PROGRAM_
 def main():
-
     df = pd.read_csv("data.csv")
-
+  
     df = df.rename(columns={
-        "TMAX (Degrees Fahrenheit)": "TMAX",
-        "TMIN (Degrees Fahrenheit)": "TMIN",
-        "TAVG (Degrees Fahrenheit)": "TAVG",
-        "PRCP (Inches)": "PRCP"
-    })
-
-    df = df.dropna()
-
+    "TMAX (Degrees Fahrenheit)": "TMAX",
+    "TMIN (Degrees Fahrenheit)": "TMIN"
+})
+    
+    df = df.dropna(subset=['TMAX','TMIN'])
     print("\nDataset Successfully Loaded:\n", df.head())
 
     activations = ['linear','softplus','ReLU','leaky_relu','sigmoid','tanh']
     loss_table = {}
+    last_day_true = df[['TMAX','TMIN']].iloc[-1].values
 
-    actual_next_day = df[['TMAX','TMIN']].values[1]
-
-    print("\n=== Training & Evaluating Activation Functions ===")
-
+    print("\nTraining & Evaluating Activation Functions")
     for act in activations:
         pred = train_and_predict(df, activation=act)
-        error = mse(actual_next_day, pred)
+        error = mse(last_day_true, pred)
         loss_table[act] = error
-        print(f"{act} → MSE: {error:.4f} | Predicted: {pred[0]}")
+        print(f"{act} -> MSE: {error:.4f} | Predicted: {pred}")
 
     best = min(loss_table, key=loss_table.get)
 
-    # Plot results
     plt.figure(figsize=(9,5))
     plt.bar(loss_table.keys(), loss_table.values(), color='skyblue')
     plt.title("Activation Function Performance")
@@ -149,7 +149,7 @@ def main():
     plt.grid(axis='y')
     plt.show()
 
-    print(f"\nBest performing activation function: **{best.upper()}** with MSE = {loss_table[best]:.4f}")
+    print(f"\nBest performing activation function: *{best.upper()}* with MSE = {loss_table[best]:.4f}")
 
 
 if __name__ == "__main__":
